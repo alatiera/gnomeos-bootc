@@ -3,6 +3,9 @@ image_tag := env("BUILD_IMAGE_TAG", "latest")
 base_dir := env("BUILD_BASE_DIR", ".")
 filesystem := env("BUILD_FILESYSTEM", "btrfs")
 
+build-containerfile $image_name=image_name:
+    sudo podman build --squash-all -t "${image_name}:latest" .
+
 bootc *ARGS:
     sudo podman run \
         --rm --privileged --pid=host \
@@ -19,12 +22,12 @@ generate-bootable-image $base_dir=base_dir $filesystem=filesystem:
         fallocate -l 20G "${base_dir}/bootable.img"
     fi
 
-    # --karg systemd.firstboot=no \
     just bootc install to-disk --composefs-backend \
         --via-loopback /data/bootable.img \
         --filesystem "${filesystem}" \
         --wipe \
         --bootloader systemd \
+        --karg systemd.firstboot=no \
         --karg splash \
         --karg quiet \
         --karg console=tty0 \
